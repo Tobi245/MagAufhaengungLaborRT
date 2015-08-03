@@ -7,9 +7,10 @@
 //============================================================================
 
 #include <iostream>
+
 using namespace std;
 
-int main() {
-	cout << "!!!Hello World!!!" << endl; // prints !!!Hello World!!!
+int main(void) {
+	cout << "Hello RPi!" << endl;
 	return 0;
 }
