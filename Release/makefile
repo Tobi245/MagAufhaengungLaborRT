@@ -44,7 +44,7 @@ all: EchtzeitTestCPP
 EchtzeitTestCPP: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: Cross G++ Linker'
-	arm-linux-gnueabihf-g++  -o "EchtzeitTestCPP" $(OBJS) $(USER_OBJS) $(LIBS)
+	arm-linux-gnueabihf-g++ -L/home/tobias/raspberrypi/wiringPi/wiringPi -o "EchtzeitTestCPP" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
