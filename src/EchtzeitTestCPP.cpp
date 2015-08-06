@@ -28,6 +28,9 @@
 
 int  mem_fd;
 void *gpio_map;
+
+pthread_t thread;
+static int shutdownthread = 0;
  
 // I/O access
 volatile unsigned *gpio;
@@ -45,6 +48,8 @@ volatile unsigned *gpio;
 #define GPIO_PULL *(gpio+37) // Pull up/pull down
 #define GPIO_PULLCLK0 *(gpio+38) // Pull up/pull down clock
  
+void *timerthread(void *parameter);
+static void sighand(int parameter);
 void setup_io();
 static inline void tsnorm(struct timespec *parameter);
 
@@ -52,6 +57,13 @@ using namespace std;
 
 int main(void)
 {
+	pthread_create(&thread, NULL, timerthread, NULL);
+	
+	signal(SIGINT, sighand);
+	signal(SIGTERM, sighand);
+	
+	pthread_join(thread, NULL);
+}
 //	wiringPiSetup();
 //	pinMode(0, OUTPUT);
 //	for(;;)
@@ -59,25 +71,27 @@ int main(void)
 //		digitalWrite(0, HIGH); delay (50);
 //		digitalWrite(0, LOW); delay (50);
 //	}
+void *timerthread(void *par)
+{
 	static int toggle	=	1;
 	
 	struct sched_param 	param;
 	struct timespec		next, interval;
 	
 	interval.tv_sec		=	0;
-	interval.tv_nsec	=	50000;
+	interval.tv_nsec	=	5000;
 	
 	param.sched_priority 	=	99;
 	if(sched_setscheduler(0, SCHED_FIFO, &param) < 0)
 	{
 		cout << "Main: Fehler bei sched_setscheduler!" << endl;
-		return EXIT_FAILURE;
+		return NULL;
 	}
 	
 	if(mlockall(MCL_CURRENT | MCL_FUTURE) < 0)
 	{
 		cout << "Main: Fehler bei mlockall!" << endl;
-		return EXIT_FAILURE;
+		return NULL;
 	}
 	
 	clock_gettime(CLOCK_MONOTONIC, &next);
@@ -106,7 +120,7 @@ int main(void)
 	OUT_GPIO(g);
 	}
 	
-	while(1)
+	while(!shutdownthread)
 	{
 		clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next, NULL);
 		next.tv_sec += interval.tv_sec;
@@ -120,7 +134,12 @@ int main(void)
 		toggle = !toggle;
 		
 	}
-	return EXIT_SUCCESS;
+	return NULL;
+}
+
+static void sighand(int sig)
+{
+	shutdownthread = 1;
 }
  
 //
